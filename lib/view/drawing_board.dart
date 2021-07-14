@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:Drawing/controller/controller.dart';
 import 'package:Drawing/model/drawing.dart';
 import 'package:Drawing/model/drawing_paint.dart';
+import 'package:Drawing/widgets/raised_btn.dart';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:image_picker/image_picker.dart';
@@ -11,15 +12,14 @@ import 'package:image_picker/image_picker.dart';
 class DrawingBoard extends StatefulWidget {
   DrawingBoard({Key key}) : super(key: key);
 
-
   @override
   _DrawingBoardState createState() => _DrawingBoardState();
 }
 
 class _DrawingBoardState extends State<DrawingBoard> {
-  final _offsets = <Offset>[];
-  final _currentAction = <Offset>[];
-  final linkedList = LinkedList<MyEntry>();
+  final _offsets = <Offset>[]; //전체 offset
+  final _currentAction = <Offset>[]; // 현재 offset
+  final linkedList = LinkedList<MyEntry>(); //전체 offset, color
   int currentDrawingLine = 0;
   int lastNullIndex = 0;
   int currentLinkedListIndex = 0;
@@ -44,111 +44,89 @@ class _DrawingBoardState extends State<DrawingBoard> {
     return Scaffold(
         appBar: AppBar(
           actions: [
-            Expanded(
-              child: RaisedButton(
-                child: Text('SAVE'),
-                onPressed: () async {
-                  await controller.saveData(_offsets,
-                      pickedFile == null ? null : pickedFile.path, isPen, colorList);
+            RaisedBtn(text: 'SAVE', onPressed : () async {
+              await controller.saveData(_offsets,
+                  pickedFile == null ? null : pickedFile.path, isPen, colorList);
 
-                  Fluttertoast.showToast(
-                      msg: '저장되었습니다.',
-                      gravity: ToastGravity.CENTER,
-                      textColor: Colors.white,
-                      backgroundColor: Colors.indigo);
-                },
-              ),
-            ),
-            Expanded(
-              child: RaisedButton(
-                child: Text('LOAD'),
-                onPressed: () async {
-                  await showDialog(
-                      context: context,
-                      builder: (context) {
-                        return SimpleDialog(
-                            title: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Text('불러오기'),
-                                IconButton(
-                                    icon: Icon(Icons.clear),
-                                    onPressed: () {
-                                      Navigator.of(context).pop();
-                                    })
-                              ],
-                            ),
-                            children: [loadSaveData()]);
-                      });
-                },
-              ),
-            ),
-            Expanded(
-              child: RaisedButton(
-                child: Text('ADD'),
-                onPressed: () async {
-                  appBarHeight = AppBar().preferredSize.height;
-                  pickedFile =
-                  await ImagePicker().getImage(source: ImageSource.gallery);
-                  setState(() {
-                    file = File(pickedFile.path);
-                  });
-                },
-              ),
-            ),
-            Expanded(
-              child: IconButton(
-                icon: Icon(Icons.arrow_back),
-                onPressed: () {
-                  if (currentLinkedListIndex == 0) return;
+              Fluttertoast.showToast(
+                  msg: '저장되었습니다.',
+                  gravity: ToastGravity.CENTER,
+                  textColor: Colors.white,
+                  backgroundColor: Colors.indigo);
+            }),
+           RaisedBtn(text: 'LOAD', onPressed: () async {
+             await showDialog(
+                 context: context,
+                 builder: (context) {
+                   return SimpleDialog(
+                       title: Row(
+                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                         children: [
+                           Text('불러오기'),
+                           IconButton(
+                               icon: Icon(Icons.clear),
+                               onPressed: () {
+                                 Navigator.of(context).pop();
+                               })
+                         ],
+                       ),
+                       children: [loadSaveData()]);
+                 });
+           },),
+            RaisedBtn(text: 'ADD',
+              onPressed: () async {
+                appBarHeight = AppBar().preferredSize.height;
+                pickedFile =
+                await ImagePicker().getImage(source: ImageSource.gallery);
+                setState(() {
+                  file = File(pickedFile.path);
+                });
+            },),
+            RaisedBtn(
+              icon: Icons.arrow_back,
+              onPressed: () {
+                if (currentLinkedListIndex == 0) return;
 
-                  lastNullIndex = getLastPreviousNullIndex();
+                lastNullIndex = getLastPreviousNullIndex();
 
-                  currentLinkedListIndex--;
-                  _offsets.removeRange(lastNullIndex, _offsets.length);
-                  colorList.removeRange(lastNullIndex, colorList.length);
-                },
-              ),
+                currentLinkedListIndex--;
+                _offsets.removeRange(lastNullIndex, _offsets.length);
+                colorList.removeRange(lastNullIndex, colorList.length);
+              },
             ),
-            Expanded(
-              child: IconButton(
-                icon: Icon(Icons.arrow_forward),
-                onPressed: () {
-                  if (currentLinkedListIndex == linkedList.length) return;
+            RaisedBtn(
+              icon: Icons.arrow_forward,
+              onPressed: () {
+                if (currentLinkedListIndex == linkedList.length) return; //현재 상태가 마지막일경우
 
-                  for (Offset offset in linkedList.elementAt(currentLinkedListIndex).offsets) {
-                    _offsets.add(offset);
-                  }
+                for (Offset offset in linkedList.elementAt(currentLinkedListIndex).offsets) {
+                  _offsets.add(offset);
+                }
 
-                  for(Color color in linkedList.elementAt(currentLinkedListIndex).colors) {
-                    colorList.add(color);
-                  }
+                for(Color color in linkedList.elementAt(currentLinkedListIndex).colors) {
+                  colorList.add(color);
+                }
 
-                  currentLinkedListIndex++;
-                },
-              ),
+                currentLinkedListIndex++;
+              },
             ),
-            Expanded(
-              child: RaisedButton(
-                child: Text('PEN'),
-                color: isPen ? Colors.deepPurple : Colors.grey,
-                onPressed: () {
-                  setState(() {
-                    isPen = true;
-                  });
-                },
-              ),
+            RaisedBtn(
+              text: 'PEN',
+              color: isPen ? Colors.deepPurple : Colors.grey,
+              onPressed: () {
+                setState(() {
+                  isPen = true;
+                });
+              },
             ),
-            Expanded(
-              child: RaisedButton(
-                child: Text('ERASE'),
-                color: isPen ? Colors.grey : Colors.deepPurple,
-                onPressed: () {
-                  setState(() {
-                    isPen = false;
-                  });
-                },
-              ),
+            RaisedBtn(
+              text: 'ERASE',
+              color: isPen ? Colors.grey : Colors.deepPurple,
+              onPressed: () {
+                setState(() {
+                  isPen = false;
+                });
+              },
             ),
           ],
         ),
@@ -291,3 +269,11 @@ class MyEntry extends LinkedListEntry<MyEntry> {
   MyEntry(this.offsets, this.colors);
 
 }
+
+/*class MyEntry {
+  final List<Offset> offsets;
+  final List<Color> colors;
+
+  MyEntry(this.offsets, this.colors);
+
+}*/

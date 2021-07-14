@@ -13,20 +13,31 @@ class DrawingPaint extends CustomPainter {
      Paint paint;
 
      paint = Paint()
-       ..strokeWidth = 2.0
+       ..strokeWidth = 3.0
        ..isAntiAlias = true;
 
+     canvas.saveLayer(Rect.fromLTWH(0, 0, size.width, size.height), paint);
     for (int i = 0; i < offsets.length - 1; i++) {
       if (offsets[i] != null && offsets[i + 1] != null) {
         // 선그리는 중
-        paint.color = colorList[i];
-        canvas.drawLine(offsets[i], offsets[i + 1], paint);
+        if(colorList[i] == Colors.white)
+         paint.blendMode = BlendMode.clear;
+        else
+          paint.color = colorList[i];
+
+         canvas.drawLine(offsets[i], offsets[i + 1], paint);
+
       } else if (offsets[i] != null && offsets[i + 1] == null) {
         // 그리기 완료
-        paint.color = colorList[i];
+        if(colorList[i] == Colors.white)
+          paint.blendMode = BlendMode.clear;
+        else
+          paint.color = colorList[i];
+
         canvas.drawPoints(PointMode.points, [offsets[i]], paint);
       }
     }
+    canvas.restore();
   }
 
   @override
